@@ -8,9 +8,7 @@ from weaviate.classes.config import Property, DataType, Configure
 from weaviate.exceptions import UnexpectedStatusCodeError
 
 
-WEAVIATE_URL = "xmblhicrrusiwmvufnun6g.c0.asia-southeast1.gcp.weaviate.cloud"  # replace with your cluster URL
-WEAVIATE_API_KEY = "eW1MakJBa1cyY3BBWW5IT196VENQZS9LUHg4VkEvMUZ0WUpCQkRocDluSlJSNnh5YTNreGVRcEFucDVzPV92MjAw"
-COLLECTION_NAME = "newlearn"
+
 
 
 def get_client():
