@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+weaviate-client
+sentence-transformers
+langchain
+langchain-groq
+PyPDF2
+tqdm
+pydantic
+aiofiles
+python-dotenv
