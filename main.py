@@ -27,7 +27,7 @@ from langchain.chains import LLMChain
 
 # Environment
 WEAVIATE_CLASS = os.getenv("WEAVIATE_CLASS", "newlearn")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 WEAVIATEE_CLASS="newlearn"
 client = get_client()
 collection = client.collections.get(WEAVIATE_CLASS)
