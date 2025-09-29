@@ -20,12 +20,11 @@ import traceback
 from fastapi import HTTPException
 
 
-# LLM imports (your original)
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
 
-# Environment
+
 WEAVIATE_CLASS = os.getenv("WEAVIATE_CLASS", "newlearn")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 WEAVIATEE_CLASS="newlearn"
@@ -57,7 +56,7 @@ def weaviate_retrieve(
     """
     collection = client.collections.get(class_name)
 
-    # Build filters
+
     filters = []
     if project_id:
         filters.append({
@@ -74,7 +73,7 @@ def weaviate_retrieve(
 
     where_filter = {"operator": "And", "operands": filters} if filters else None
 
-    # Run query
+
     res = collection.query.near_vector(
         near_vector=question_embedding,
         limit=top_k,
@@ -82,7 +81,7 @@ def weaviate_retrieve(
         return_properties=["content", "source_uri", "chunk_index", "page_number", "tags"]
     )
 
-    # Extract results safely
+ 
     objs = []
     for o in res.objects:
         props = o.properties
@@ -99,7 +98,7 @@ def weaviate_retrieve(
 
 
 
-# Upload endpoint (auto-update + embedding + upsert)
+
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...), project_id: str = Form("proj-123"), tags: str = Form("pdf")):
     """
@@ -115,13 +114,12 @@ async def upload_pdf(file: UploadFile = File(...), project_id: str = Form("proj-
         content = await file.read()
         f.write(content)
 
-    # load and split
+
     docs = load_and_split_pdf(file_path)
 
-    # compute embeddings and attach to doc metadata
+
     for i, d in enumerate(docs):
         vector = get_embeddings(d.page_content)
-        # attach vector into metadata so upsert util can pick it
         d.metadata["vector"] = vector
         d.metadata["source"] = file.filename
         d.metadata["document_id"] = f"{uuid.uuid4()}"
@@ -134,12 +132,12 @@ async def upload_pdf(file: UploadFile = File(...), project_id: str = Form("proj-
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
     finally:
-        # cleanup
+  
         shutil.rmtree(tmpdir, ignore_errors=True)
 
     return {"status": "success", "uploaded_file": file.filename, "chunks": len(docs)}
 
-# Re-index endpoint (optional)
+
 @app.post("/reindex")
 async def reindex(project_id: str = Form(None)):
     """
@@ -148,23 +146,22 @@ async def reindex(project_id: str = Form(None)):
     """
     return {"status": "not_implemented", "detail": "Custom reindex logic required."}
 
-# Simple chat endpoint (non-streaming) returns final answer
+
 class ChatRequest(BaseModel):
     question: str
     top_k: int = 3
     project_id: Optional[str] = None
-    tags: Optional[str] = None  # comma-separated tags
+    tags: Optional[str] = None  
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     try:
-        # 1️⃣ Embed the question
+ 
         question_embedding = get_embeddings(req.question)
 
-        # 2️⃣ Parse tags into a list
+
         tags_list = req.tags.split(",") if req.tags else None
 
-        # 3️⃣ Retrieve relevant documents from Weaviate
         objs = weaviate_retrieve(
             question_embedding=question_embedding,
             top_k=req.top_k,
@@ -172,14 +169,14 @@ async def chat_endpoint(req: ChatRequest):
             tags=tags_list
         )
 
-        # 4️⃣ Build context string
+   
         context_parts = [
             f"Source: {o.get('source_uri', 'unknown')} | Page: {o.get('page_number', 'unknown')}\n\n{o.get('content', '')}"
             for o in objs
         ]
         context = "\n\n---\n\n".join(context_parts) if context_parts else ""
 
-        # 5️⃣ Create prompt for LLM
+
         prompt = ChatPromptTemplate.from_messages([
             ("system", "You are a knowledgeable and polite support assistant. "
                        "Answer using ONLY the provided context. "
@@ -188,13 +185,13 @@ async def chat_endpoint(req: ChatRequest):
         ])
         chain = LLMChain(llm=llm, prompt=prompt)
 
-        # 6️⃣ Generate LLM response
+ 
         answer = chain.run({"context": context, "question": req.question})
 
         return {"answer": answer, "retrieved_docs": len(objs)}
 
     except AttributeError as e:
-        # Special handling for Weaviate client mismatch
+      
         if "'WeaviateClient' object has no attribute 'query'" in str(e):
             raise HTTPException(
                 status_code=500,
