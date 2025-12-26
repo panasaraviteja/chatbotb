@@ -41,7 +41,7 @@ app.add_middleware(
 )
 
 
-llm = ChatGroq(model="gemma2-9b-it", temperature=0,api_key="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" )  # ensure env var GROQ_API_KEY set
+
 
 def weaviate_retrieve(
     question_embedding,
